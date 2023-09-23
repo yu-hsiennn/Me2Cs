@@ -6,38 +6,66 @@ from processing import Processing
 
 # It is used to capture the human motion.
 class Detector:
-    def __init__(self, origin_motion, fps = 30, black_background = False):
-        self.MP = Mediapipe()
+    def __init__(self, origin_motion, mode, input_path, black_background, save_path, fps = 30):
+        self.MP = Mediapipe(mode=mode)
         self.processing = Processing()
-        self.black_background = black_background
         self.origin_motion = origin_motion
+        self.input_path = input_path
+        self.black_background = black_background
+        self.static_video = mode
+        self.save_path = save_path
+        self.fps = fps
 
     def detector(self):
-        self.cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+        # streaming video
+        if not self.static_video:
+            self.cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+        # static video
+        else:
+            print(f"loading file... => {self.input_path}")
+            self.cap = cv2.VideoCapture(self.input_path)
+            self.out = cv2.VideoWriter(
+                f"{self.save_path}_mediapipe.mp4",
+                fps=self.fps,
+                fourcc=cv2.VideoWriter_fourcc(*"mp4v"),
+                frameSize=(int(self.cap.get(3)), int(self.cap.get(4))),
+            )
+        # Set the desired frame rate (fps)
+        desired_fps = 30  # Change this to your desired frame rate
 
-        while (self.cap.isOpened()):
+        # Set the frame rate in the VideoCapture object
+        self.cap.set(cv2.CAP_PROP_FPS, desired_fps)
+        while self.cap.isOpened():
             success, image = self.cap.read()
-            if (not success):
+            if not success:
                 print("Ignoring empty camera frame.")
-                continue
+                break
 
             image, p_landmarks, p_connections = self.MP.findPose(image, False)
             # use black background
-            if (self.black_background):
+            if self.black_background:
                 image = image * 0
-            
+
             # draw points
             mp.solutions.drawing_utils.draw_landmarks(image, p_landmarks, p_connections)
             lmList = self.MP.getPosition(image)
-            if (len(lmList.keys())):
+
+            if len(lmList.keys()):
                 joints_list = self.processing.Convert(lmList)
                 self.origin_motion.append(joints_list)
 
             # Flip the image horizontally for a selfie-view display.
-            cv2.imshow('MediaPipe Pose', image)
-            if (cv2.waitKey(5) & 0xFF == 27):
+            if self.static_video:
+                self.out.write(image)
+                cv2.waitKey(10)
+            cv2.imshow("MediaPipe Pose", image)
+            if cv2.waitKey(1) & 0xFF == 27:
                 break
+
         self.cap.release()
+        if self.static_video:
+            self.out.release()
+        cv2.destroyAllWindows()
 
 # Using Mediapipe model that release by google to get the human joints coordinate.
 class Mediapipe:
@@ -80,7 +108,3 @@ class Mediapipe:
                     cv2.circle(img, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
 
         return lmList
-
-if __name__ == "__main__":
-    Detector = Detector(list)
-    Detector.detector()
