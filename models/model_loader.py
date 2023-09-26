@@ -17,7 +17,7 @@ class ModelLoader:
         return model_part
 
     def _load_model(self, model_name, part):
-        path = os.path.join("models", model_name, part)
+        path = os.path.join("model_files", model_name, part)
         model = torch.load(path + "/best.pth",map_location = self.DEVICE).to(self.DEVICE)
         model.eval()
 

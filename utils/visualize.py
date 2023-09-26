@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from joint_def import JointDef
+from models.joint_def import JointDef
 
 class AnimePlot():
     def __init__(self):

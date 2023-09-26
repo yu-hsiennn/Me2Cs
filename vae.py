@@ -11,7 +11,6 @@ class Encoder_LSTM(nn.Module):
             hidden_size= 1024, #192
             num_layers = 1,
             batch_first = True,
-            dropout = 0.1,
             bidirectional=True
         )
         self.fc = nn.Linear(1024*2, 512) #192*2, 96
@@ -29,7 +28,6 @@ class Decoder_LSTM(nn.Module):
             hidden_size= 1024, #192
             num_layers = 1,
             batch_first = True,
-            dropout = 0.1,
             bidirectional=True
         )
         self.w1 = nn.Linear(1024*2, inp) #192*2

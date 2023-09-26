@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-from joint_def import JointDef
+from models.joint_def import JointDef
 
 
 class Processing:

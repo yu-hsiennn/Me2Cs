@@ -1,6 +1,6 @@
-from inference import Inference
+from models.inference import Inference
 from detector import Detector
-from visualize import AnimePlot
+from utils.visualize import AnimePlot
 import numpy as np
 import time, threading, argparse, os
 

@@ -1,8 +1,7 @@
 import mediapipe as mp
 import numpy as np
-import cv2
-import collections
-from processing import Processing
+import cv2, collections
+from utils.processing import Processing
 
 # It is used to capture the human motion.
 class Detector:

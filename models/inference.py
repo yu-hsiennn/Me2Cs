@@ -1,9 +1,9 @@
 import numpy as np   
 import torch
 from scipy.interpolate import CubicSpline
-from processing import Processing
-from joint_def import JointDef
-from model_loader import ModelLoader
+from utils.processing import Processing
+from models.joint_def import JointDef
+from models.model_loader import ModelLoader
 from pykalman import KalmanFilter
 
 class Inference:
@@ -15,7 +15,7 @@ class Inference:
         self.smooth_motion = smooth_motion
         self.part_list = self.joint_def.part_list
         self.total_size = 30
-        self.model_name = "test_V4_Choreomaster_train_angle_01_2010"
+        self.model_name = "21version_V4_Choreomaster_train_angle_01_2010"
         self.models = ModelLoader(self.model_name, self.DEVICE, self.part_list).load_model()
         self.TPose = self.processing.load_TPose()
 
@@ -53,7 +53,8 @@ class Inference:
             self.smooth_motion[motion_index - 10:] = smooth_datas
             
     def smooth_next_10_frames(self, motion_index):
-        data = self.concatenate_frames(motion_index)
+        # data = self.concatenate_frames(motion_index)
+        data = np.array(self.origin_motion[motion_index - 10: motion_index + 20])
         data = self.processing.normalize(data)
         data = self.processing.calculate_angle(data)
         data = self.kalman_filter(data)
