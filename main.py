@@ -35,15 +35,15 @@ class MediapipeSmooth2CustomJoints:
 
     def smooth_origin_motion(self):
         while True:
-            while (len(self.origin_motion) - self.step < 20 and not self.finished):
+            while (len(self.origin_motion) - self.step < 30 and not self.finished):
                 # prevent loop from hogging the CPU and giving a chance for other threads to execute.
                 time.sleep(0)
 
             # inference model
-            if (len(self.origin_motion) - self.step >= 20):
+            if (len(self.origin_motion) - self.step >= 30):
                 self.model.main(self.step, 0)
-                self.step += 10
-            elif (self.finished and len(self.origin_motion) - self.step < 20):
+                self.step += 30
+            elif (self.finished and len(self.origin_motion) - self.step < 30):
                 self.model.main(self.step, 1)
                 break
 

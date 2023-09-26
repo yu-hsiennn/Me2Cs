@@ -40,21 +40,17 @@ class Inference:
         return result.detach().cpu().numpy()
 
     def smooth_remain_frames(self, motion_index):
-        data = np.array(self.origin_motion[:10]) if motion_index == 0 else np.array(self.origin_motion[motion_index:])
+        data = np.array(self.origin_motion[motion_index:])
         data = self.processing.normalize(data)
         data = self.processing.calculate_angle(data)
         data = self.kalman_filter(data)
         data = self.processing.calculate_position(data, self.TPose)
-        if motion_index == 0:
-            self.smooth_motion.extend(data)
-        else:
-            smooth_datas = self.crossfading(np.array(self.smooth_motion[-10:]), data, 1)
-            self.smooth_motion.extend(data)
-            self.smooth_motion[motion_index - 10:] = smooth_datas
+        smooth_datas = self.crossfading(np.array(self.smooth_motion[-10:]), data, 1)
+        self.smooth_motion.extend(data)
+        self.smooth_motion[motion_index - 10:] = smooth_datas
             
-    def smooth_next_10_frames(self, motion_index):
-        # data = self.concatenate_frames(motion_index)
-        data = np.array(self.origin_motion[motion_index - 10: motion_index + 20])
+    def smooth_next_30_frames(self, motion_index):
+        data = np.array(self.origin_motion[motion_index: motion_index + 30])
         data = self.processing.normalize(data)
         data = self.processing.calculate_angle(data)
         data = self.kalman_filter(data)
@@ -68,13 +64,7 @@ class Inference:
 
         pred = self.joint_def.combine_numpy(part_datas)
         pred = self.processing.calculate_position(pred, self.TPose)
-        return pred[10:20]
-
-    def concatenate_frames(self, motion_index):
-        return np.concatenate(
-            (self.smooth_motion[-10:], self.origin_motion[motion_index : motion_index + 20]),
-            axis=0
-        )
+        return pred
 
     def kalman_1D(self, observations, damping=1):
         """
@@ -140,11 +130,17 @@ class Inference:
         return final_data
     
     def main(self, motion_index, mode):
-        if mode == 0 and len(self.smooth_motion) >= 10:
-            # total frame of origin data are larger or equal than 30
-            pred_smooth = self.smooth_next_10_frames(motion_index)
+        if motion_index == 0:
+            # Case 1: Starting from the beginning
+            pred_smooth = self.smooth_next_30_frames(motion_index)
+            self.smooth_motion.extend(pred_smooth)
+        elif mode == 0:
+            # Case 2: Smooth transition between frames
+            # Total frames of original data are larger or equal to 30
+            pred_smooth = self.smooth_next_30_frames(motion_index)
             smooth_datas = self.crossfading(np.array(self.smooth_motion[-10:]), pred_smooth, 1)
             self.smooth_motion.extend(pred_smooth)
             self.smooth_motion[motion_index - 10:] = smooth_datas
         else:
+            # Case 3: Handling remaining frames
             self.smooth_remain_frames(motion_index)
